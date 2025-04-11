@@ -1,0 +1,49 @@
++------------------+           +------------------+           +------------------+
+|      Model       |           |     Controller    |           |       View       |
++------------------+           +------------------+           +------------------+
+| User             |<----------| UserController   |<----------| LoginView        |
+| Accommodation    |<----------| AccommodCtrl     |<----------| RegisterView     |
+| Booking          |<----------| BookingCtrl      |<----------| UserDashboard    |
+| Promotion        |<----------| PromotionCtrl    |<----------| AdminDashboard   |
+| Review           |<----------| ReviewCtrl       |<----------| AccommodDetails  |
+| Payment          |<----------| PaymentCtrl      |<----------| BookingForm      |
++------------------+           +------------------+           +------------------+
+        ^                              ^                              |
+        |                              |                              |
+        |                              |                              |
+        |                              |                              v
++------------------+           +------------------+
+|       DAO        |           |      Utils       |
++------------------+           +------------------+
+| UserDAO          |           | DatabaseConn     |
+| AccommodationDAO |           | DateUtils        |
+| BookingDAO       |           | ValidationUtils  |
+| PromotionDAO     |           | PriceCalculator  |
+| ReviewDAO        |           |                  |
+| PaymentDAO       |           |                  |
++------------------+           +------------------+
+
+Model-View-Controller (MVC) Architecture:
+
+1. Model Layer:
+   - Contains domain objects (User, Accommodation, Booking, etc.)
+   - Represents data and business logic
+
+2. View Layer:
+   - User interfaces (LoginView, UserDashboard, etc.)
+   - Displays data to users and captures user input
+
+3. Controller Layer:
+   - Mediates between Model and View
+   - Processes user input from View
+   - Updates Model and View accordingly
+
+4. DAO Layer:
+   - Data Access Objects handle database operations
+   - Each DAO interfaces with specific database tables
+   - Abstracts database access from business logic
+
+5. Utils Layer:
+   - Helper classes for common functionality
+   - Database connection management
+   - Data validation and calculation utilities

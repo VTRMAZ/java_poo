@@ -1,0 +1,56 @@
+Database Schema - Booking Application
+
++------------------+          +------------------+          +------------------+
+|      users       |          |  accommodations  |          |     bookings     |
++------------------+          +------------------+          +------------------+
+| id (PK)          |          | id (PK)          |          | id (PK)          |
+| username         |          | name             |          | user_id (FK)     |
+| password         |          | address          |          | accomm_id (FK)   |
+| email            |          | city             |          | check_in_date    |
+| first_name       |          | country          |          | check_out_date   |
+| last_name        |          | description      |          | num_of_guests    |
+| phone_number     |          | price_per_night  |          | total_price      |
+| is_admin         |          | max_guests       |          | status           |
++------------------+          | accomm_type      |          | booking_date     |
+                              | has_wifi         |          +------------------+
+                              | has_pool         |                  |
+                              | has_parking      |                  |
+                              | rating           |                  |
+                              +------------------+                  |
+                                      |                            |
+                                      |                            |
++------------------+          +------------------+          +------------------+
+|    promotions    |          |     reviews      |          |     payments     |
++------------------+          +------------------+          +------------------+
+| id (PK)          |          | id (PK)          |          | id (PK)          |
+| accomm_id (FK)   |          | user_id (FK)     |          | booking_id (FK)  |
+| name             |          | accomm_id (FK)   |          | amount           |
+| description      |          | booking_id (FK)  |          | payment_method   |
+| discount_pct     |          | rating           |          | payment_date     |
+| start_date       |          | comment          |          | status           |
+| end_date         |          | review_date      |          | transaction_id   |
+| promo_code       |          +------------------+          +------------------+
++------------------+
+
+Relationships:
+
+1. One-to-Many: User -> Bookings
+   A user can make multiple bookings, but each booking belongs to one user.
+
+2. One-to-Many: Accommodation -> Bookings
+   An accommodation can have multiple bookings, but each booking is for one accommodation.
+
+3. One-to-Many: Accommodation -> Promotions
+   An accommodation can have multiple promotions, but each promotion is for one accommodation.
+
+4. One-to-Many: Booking -> Reviews
+   A booking can have one review, and each review is associated with one booking.
+
+5. One-to-Many: Booking -> Payments
+   A booking can have multiple payments (e.g., deposit, full payment), and each payment belongs to one booking.
+
+6. One-to-Many: User -> Reviews
+   A user can write multiple reviews, but each review is written by one user.
+
+7. One-to-Many: Accommodation -> Reviews
+   An accommodation can have multiple reviews, but each review is for one accommodation.
