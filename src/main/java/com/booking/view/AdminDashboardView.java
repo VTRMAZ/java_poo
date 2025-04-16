@@ -204,13 +204,13 @@ public class AdminDashboardView extends JFrame implements ActionListener {
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
         addAccommodationButton = new JButton("Add Accommodation");
-        editAccommodationButton = new JButton("Rafraîchir les hébergements");
+        editAccommodationButton = new JButton("Refresh");
         deleteAccommodationButton = new JButton("Delete Accommodation");
         // ensuite tu ajoutes ton bouton
         accommodationTable = new JTable();
         loadAccommodations();  // Pour charger les données à l'ouverture
 
-        JButton addAccommodationButton = new JButton("Ajouter un hébergement");
+        JButton addAccommodationButton = new JButton("add a accommodation");
         addAccommodationButton.addActionListener(e -> openAddAccommodationDialog());
 
         editAccommodationButton.addActionListener(e -> loadAccommodations());
@@ -226,9 +226,7 @@ public class AdminDashboardView extends JFrame implements ActionListener {
         accommodationPanel.add(new JScrollPane(accommodationTable), BorderLayout.CENTER);
         loadAccommodations();
 // Ajout à l'onglet "Hébergements"
-        tabbedPane.addTab("Hébergements", accommodationPanel);
 
-        tabbedPane.add("Hébergements", accommodationPanel);
 
 
         addAccommodationButton.addActionListener(this);
