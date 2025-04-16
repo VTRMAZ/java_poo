@@ -50,7 +50,9 @@ public class UserController {
         user.setLastName(lastName);
         user.setPhoneNumber(phoneNumber);
         user.setAdmin(false);
-        
+        user.setNewUsers(1);  // Ajout de cette ligne pour définir un utilisateur comme "nouveau"
+
+
         return userDAO.add(user);
     }
 }

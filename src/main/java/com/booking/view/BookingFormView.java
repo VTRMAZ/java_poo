@@ -246,9 +246,27 @@ public class BookingFormView extends JFrame implements ActionListener {
         
         guestsPanel.add(guestsLabel, BorderLayout.WEST);
         guestsPanel.add(guestsSpinner, BorderLayout.EAST);
-        
+
+
+
+
         // Promo code panel
         JPanel promoPanel = new JPanel(new BorderLayout(10, 0));
+
+        // Supposons que currentUser est ton objet utilisateur actuel
+        int userId = currentUser.getId();
+        boolean isEligibleForPromo = checkNewUserStatus(userId);  // Méthode qui vérifie si new_users = 0
+
+// Afficher ou non le panneau du code promo en fonction de l'éligibilité
+        if (isEligibleForPromo) {
+            // Si new_users == 0, on affiche le panneau
+            promoPanel.setVisible(true);
+        } else {
+            // Sinon, on cache le panneau
+            promoPanel.setVisible(false);
+        }
+
+
         promoPanel.setBackground(Color.WHITE);
         promoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
@@ -267,6 +285,7 @@ public class BookingFormView extends JFrame implements ActionListener {
         
         promoPanel.add(promoLabel, BorderLayout.WEST);
         promoPanel.add(promoInputPanel, BorderLayout.CENTER);
+
         
         // Add components to form panel
         formPanel.add(formTitle);
@@ -277,7 +296,14 @@ public class BookingFormView extends JFrame implements ActionListener {
         formPanel.add(Box.createVerticalStrut(15));
         formPanel.add(promoPanel);
         formPanel.add(Box.createVerticalStrut(15));
-        
+        // Vérification de l'utilisateur
+        if (isEligibleForPromo) {
+            // Afficher le panneau si new_users == 0
+            promoPanel.setVisible(true);
+        } else {
+            // Cacher le panneau si new_users != 0
+            promoPanel.setVisible(false);
+        }
         // Availability check
         JPanel availabilityPanel = new JPanel(new BorderLayout(10, 0));
         availabilityPanel.setBackground(Color.WHITE);
@@ -811,6 +837,31 @@ public class BookingFormView extends JFrame implements ActionListener {
 
         return imageUrl;
     }
+
+
+    private boolean checkNewUserStatus(int userId) {
+        boolean isEligible = false;
+        String query = "SELECT new_users FROM users WHERE id = ?";
+
+        // Connexion à la base de données
+        try (Connection conn = DatabaseConnection.getConnection();  // Connexion via une méthode déjà existante
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                // Si new_users est égal à 0, l'utilisateur est éligible
+                isEligible = rs.getInt("new_users") == 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isEligible;
+    }
+
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == checkAvailabilityButton) {

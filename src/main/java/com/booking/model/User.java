@@ -9,7 +9,8 @@ public class User {
     private String lastName;
     private String phoneNumber;
     private boolean isAdmin;
-    
+    private int newUsers;  // Ajout du champ new_users
+
     public User() {}
     
     public User(int id, String username, String password, String email, String firstName, String lastName, String phoneNumber, boolean isAdmin) {
@@ -21,6 +22,8 @@ public class User {
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
         this.isAdmin = isAdmin;
+        this.newUsers = newUsers;  // Initialisation du champ new_users
+
     }
     
     // Getters and Setters
@@ -87,7 +90,10 @@ public class User {
     public void setAdmin(boolean isAdmin) {
         this.isAdmin = isAdmin;
     }
-    
+
+    public void setNewUsers(int newUsers) {
+        this.newUsers = 1;  // Setter pour new_users
+    }
     @Override
     public String toString() {
         return "User{" +
@@ -98,6 +104,8 @@ public class User {
                 ", lastName='" + lastName + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", isAdmin=" + isAdmin +
+                ", newUsers=" + newUsers +  // Affiche la valeur de new_users
+
                 '}';
     }
 }
