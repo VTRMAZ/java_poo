@@ -14,16 +14,16 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 public class UserDashboardView extends JFrame implements ActionListener {
-    private JComboBox<String> ratingComboBox;
 
     private final User currentUser;
     private final AccommodationController accommodationController;
     private final BookingController bookingController;
 
+    private JPanel resultsPanel;
+    private JComboBox<String> ratingComboBox;
+
     private JTabbedPane tabbedPane;
-    private JTable accommodationsTable;
     private JTable bookingsTable;
-    private DefaultTableModel accommodationTableModel;
     private DefaultTableModel bookingTableModel;
     private JButton searchButton;
     private JButton bookButton;
@@ -51,10 +51,8 @@ public class UserDashboardView extends JFrame implements ActionListener {
     }
 
     private void initComponents() {
-        // Set layout
         setLayout(new BorderLayout());
 
-        // Create header panel
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -69,14 +67,9 @@ public class UserDashboardView extends JFrame implements ActionListener {
 
         add(headerPanel, BorderLayout.NORTH);
 
-        // Create tabbed pane
         tabbedPane = new JTabbedPane();
-
-        // Create search accommodations panel
         JPanel searchPanel = createSearchPanel();
         tabbedPane.addTab("Search Accommodations", searchPanel);
-
-        // Create my bookings panel
         JPanel bookingsPanel = createBookingsPanel();
         tabbedPane.addTab("My Bookings", bookingsPanel);
 
@@ -87,24 +80,20 @@ public class UserDashboardView extends JFrame implements ActionListener {
         JPanel searchPanel = new JPanel(new BorderLayout());
         searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Create search filters panel
-        JPanel filtersPanel = new JPanel(new GridLayout(1, 4, 10, 0));
+        JPanel filtersPanel = new JPanel(new GridLayout(1, 5, 10, 0));
         filtersPanel.setBorder(BorderFactory.createTitledBorder("Search Filters"));
 
-        // City filter
         JPanel cityPanel = new JPanel(new BorderLayout());
         cityPanel.add(new JLabel("City:"), BorderLayout.NORTH);
         cityField = new JTextField();
         cityPanel.add(cityField, BorderLayout.CENTER);
 
-        // Accommodation type filter
         JPanel typePanel = new JPanel(new BorderLayout());
         typePanel.add(new JLabel("Type:"), BorderLayout.NORTH);
         String[] accommodationTypes = {"All", "hotel", "apartment", "villa", "chalet", "cottage"};
         accommodationTypeComboBox = new JComboBox<>(accommodationTypes);
         typePanel.add(accommodationTypeComboBox, BorderLayout.CENTER);
 
-        // Price range filter
         JPanel pricePanel = new JPanel(new BorderLayout());
         pricePanel.add(new JLabel("Max Price per Night:"), BorderLayout.NORTH);
         priceRangeSlider = new JSlider(JSlider.HORIZONTAL, 0, 1000, 500);
@@ -113,72 +102,36 @@ public class UserDashboardView extends JFrame implements ActionListener {
         priceRangeSlider.setPaintTicks(true);
         priceRangeSlider.setPaintLabels(true);
         priceRangeLabel = new JLabel("$500");
-        priceRangeSlider.addChangeListener(e -> {
-            int value = priceRangeSlider.getValue();
-            priceRangeLabel.setText("$" + value);
-        });
+        priceRangeSlider.addChangeListener(e -> priceRangeLabel.setText("$" + priceRangeSlider.getValue()));
         pricePanel.add(priceRangeSlider, BorderLayout.CENTER);
         pricePanel.add(priceRangeLabel, BorderLayout.EAST);
-
-// Rating filter
 
         JPanel ratingPanel = new JPanel(new BorderLayout());
         ratingPanel.add(new JLabel("Min Rating:"), BorderLayout.NORTH);
         String[] ratingOptions = {"All", "5", "4", "3", "2", "1"};
-        ratingComboBox = new JComboBox<>(ratingOptions); // 👈 Déclare ratingComboBox comme variable d'instance si besoin
+        ratingComboBox = new JComboBox<>(ratingOptions);
         ratingPanel.add(ratingComboBox, BorderLayout.CENTER);
 
-        // Search button
         searchButton = new JButton("Search");
         searchButton.addActionListener(this);
 
         filtersPanel.add(cityPanel);
         filtersPanel.add(typePanel);
         filtersPanel.add(pricePanel);
-        filtersPanel.add(ratingPanel); // 👈 ici, on ajoute le rating
-
+        filtersPanel.add(ratingPanel);
         filtersPanel.add(searchButton);
 
         searchPanel.add(filtersPanel, BorderLayout.NORTH);
 
-        // Create accommodations table
-        accommodationTableModel = new DefaultTableModel() {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Make all cells non-editable
-            }
-        };
+        resultsPanel = new JPanel();
+        resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
+        resultsPanel.setBackground(Color.WHITE);
 
-        accommodationTableModel.addColumn("ID");
-        accommodationTableModel.addColumn("Name");
-        accommodationTableModel.addColumn("City");
-        accommodationTableModel.addColumn("Country");
-        accommodationTableModel.addColumn("Type");
-        accommodationTableModel.addColumn("Price/Night");
-        accommodationTableModel.addColumn("Rating");
+        JScrollPane resultsScrollPane = new JScrollPane(resultsPanel);
+        resultsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        resultsScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        accommodationsTable = new JTable(accommodationTableModel);
-        accommodationsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        accommodationsTable.getColumnModel().getColumn(0).setMaxWidth(50); // ID column
-        accommodationsTable.getColumnModel().getColumn(6).setMaxWidth(70); // Rating column
-
-        JScrollPane scrollPane = new JScrollPane(accommodationsTable);
-        searchPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Create buttons panel
-        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        viewDetailsButton = new JButton("View Details");
-        bookButton = new JButton("Book Now");
-
-        viewDetailsButton.addActionListener(this);
-        bookButton.addActionListener(this);
-
-        buttonsPanel.add(viewDetailsButton);
-        buttonsPanel.add(bookButton);
-
-        searchPanel.add(buttonsPanel, BorderLayout.SOUTH);
-
+        searchPanel.add(resultsScrollPane, BorderLayout.CENTER);
         return searchPanel;
     }
 
@@ -186,11 +139,10 @@ public class UserDashboardView extends JFrame implements ActionListener {
         JPanel bookingsPanel = new JPanel(new BorderLayout());
         bookingsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Create bookings table
         bookingTableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make all cells non-editable
+                return false;
             }
         };
 
@@ -208,215 +160,175 @@ public class UserDashboardView extends JFrame implements ActionListener {
         JScrollPane scrollPane = new JScrollPane(bookingsTable);
         bookingsPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Create buttons panel
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
         cancelButton = new JButton("Cancel Booking");
         cancelButton.addActionListener(this);
-
         buttonsPanel.add(cancelButton);
 
         bookingsPanel.add(buttonsPanel, BorderLayout.SOUTH);
-
         return bookingsPanel;
     }
 
     private void loadAccommodations() {
-        // Clear table
-        accommodationTableModel.setRowCount(0);
-
-        // Get all accommodations
+        resultsPanel.removeAll();
         List<Accommodation> accommodations = accommodationController.getAllAccommodations();
-
-        // Add rows to table
-        for (Accommodation accommodation : accommodations) {
-            accommodationTableModel.addRow(new Object[]{
-                accommodation.getId(),
-                accommodation.getName(),
-                accommodation.getCity(),
-                accommodation.getCountry(),
-                accommodation.getAccommodationType(),
-                String.format("$%.2f", accommodation.getPricePerNight()),
-                accommodation.getRating()
-            });
+        for (Accommodation acc : accommodations) {
+            resultsPanel.add(Box.createVerticalStrut(10));
+            resultsPanel.add(new AccommodationCard(acc));
         }
-    }
-
-    private void loadUserBookings() {
-        // Clear table
-        bookingTableModel.setRowCount(0);
-
-        // Get user's bookings
-        List<Booking> bookings = bookingController.getBookingsByUserId(currentUser.getId());
-
-        // Add rows to table
-        for (Booking booking : bookings) {
-            Accommodation accommodation = accommodationController.getAccommodationById(booking.getAccommodationId());
-
-            bookingTableModel.addRow(new Object[]{
-                booking.getId(),
-                accommodation != null ? accommodation.getName() : "Unknown",
-                booking.getCheckInDate(),
-                booking.getCheckOutDate(),
-                booking.getNumberOfGuests(),
-                String.format("$%.2f", booking.getTotalPrice()),
-                booking.getStatus()
-            });
-        }
+        resultsPanel.revalidate();
+        resultsPanel.repaint();
     }
 
     private void searchAccommodations() {
         String city = cityField.getText().trim();
         String type = accommodationTypeComboBox.getSelectedItem().toString();
         double maxPrice = priceRangeSlider.getValue();
-
-        // 🔥 Nouveau : rating exact
         int exactRating = 0;
         String selectedRating = ratingComboBox.getSelectedItem().toString();
         if (!selectedRating.equals("All")) {
-            exactRating = Integer.parseInt(selectedRating); // "4" → 4
+            exactRating = Integer.parseInt(selectedRating);
         }
 
-        // Clear table
-        accommodationTableModel.setRowCount(0);
-
-        // Get filtered accommodations
         List<Accommodation> accommodations = accommodationController.searchWithFilters(
                 city.isEmpty() ? null : city,
-                null, // Country is not filtered here
-                "All".equals(type) ? null : type, // Specific type or "All"
-                0, // Min price (no filter)
-                maxPrice, // Max price
-                exactRating, // Rating filter (exact match)
-                0 // Max guests (no filter)
+                null,
+                "All".equals(type) ? null : type,
+                0,
+                maxPrice,
+                exactRating,
+                0
         );
 
-        // Add rows to table
-        for (Accommodation accommodation : accommodations) {
-            accommodationTableModel.addRow(new Object[] {
-                    accommodation.getId(),
-                    accommodation.getName(),
-                    accommodation.getCity(),
-                    accommodation.getCountry(),
-                    accommodation.getAccommodationType(),
-                    String.format("$%.2f", accommodation.getPricePerNight()),
-                    accommodation.getRating()
+        resultsPanel.removeAll();
+        for (Accommodation acc : accommodations) {
+            resultsPanel.add(Box.createVerticalStrut(10));
+            resultsPanel.add(new AccommodationCard(acc));
+        }
+        resultsPanel.revalidate();
+        resultsPanel.repaint();
+    }
+
+    private void loadUserBookings() {
+        bookingTableModel.setRowCount(0);
+        List<Booking> bookings = bookingController.getBookingsByUserId(currentUser.getId());
+        for (Booking booking : bookings) {
+            Accommodation accommodation = accommodationController.getAccommodationById(booking.getAccommodationId());
+            bookingTableModel.addRow(new Object[]{
+                    booking.getId(),
+                    accommodation != null ? accommodation.getName() : "Unknown",
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate(),
+                    booking.getNumberOfGuests(),
+                    String.format("$%.2f", booking.getTotalPrice()),
+                    booking.getStatus()
             });
         }
     }
 
-    private void viewAccommodationDetails() {
-        int selectedRow = accommodationsTable.getSelectedRow();
-        
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, 
-                                         "Please select an accommodation to view.", 
-                                         "Selection Required", 
-                                         JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        
-        int accommodationId = (int) accommodationsTable.getValueAt(selectedRow, 0);
-        Accommodation accommodation = accommodationController.getAccommodationById(accommodationId);
-        
-        if (accommodation != null) {
-            AccommodationDetailsView detailsView = new AccommodationDetailsView(accommodation, currentUser);
-            detailsView.setVisible(true);
-        }
-    }
-    
-    private void bookAccommodation() {
-        int selectedRow = accommodationsTable.getSelectedRow();
-        
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, 
-                                         "Please select an accommodation to book.", 
-                                         "Selection Required", 
-                                         JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        
-        int accommodationId = (int) accommodationsTable.getValueAt(selectedRow, 0);
-        Accommodation accommodation = accommodationController.getAccommodationById(accommodationId);
-        
-        if (accommodation != null) {
-            BookingFormView bookingForm = new BookingFormView(accommodation, currentUser, this);
-            bookingForm.setVisible(true);
-        }
-    }
-    
-    private void cancelBooking() {
-        int selectedRow = bookingsTable.getSelectedRow();
-        
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, 
-                                         "Please select a booking to cancel.", 
-                                         "Selection Required", 
-                                         JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        
-        int bookingId = (int) bookingsTable.getValueAt(selectedRow, 0);
-        String status = (String) bookingsTable.getValueAt(selectedRow, 6);
-        
-        if ("CANCELLED".equals(status) || "COMPLETED".equals(status)) {
-            JOptionPane.showMessageDialog(this, 
-                                         "You cannot cancel a booking that is already " + status.toLowerCase() + ".", 
-                                         "Cancellation Error", 
-                                         JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        int confirm = JOptionPane.showConfirmDialog(this, 
-                                                  "Are you sure you want to cancel this booking?", 
-                                                  "Confirm Cancellation", 
-                                                  JOptionPane.YES_NO_OPTION);
-        
-        if (confirm == JOptionPane.YES_OPTION) {
-            boolean cancelled = bookingController.cancelBooking(bookingId);
-            
-            if (cancelled) {
-                JOptionPane.showMessageDialog(this, 
-                                             "Booking cancelled successfully.", 
-                                             "Cancellation Successful", 
-                                             JOptionPane.INFORMATION_MESSAGE);
-                loadUserBookings(); // Refresh bookings table
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                                             "Failed to cancel booking. Please try again.", 
-                                             "Cancellation Error", 
-                                             JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    
     private void logout() {
-        this.dispose(); // Close dashboard
-        
+        this.dispose();
         SwingUtilities.invokeLater(() -> {
             LoginView loginView = new LoginView();
             loginView.setVisible(true);
         });
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == searchButton) {
             searchAccommodations();
-        } else if (e.getSource() == viewDetailsButton) {
-            viewAccommodationDetails();
-        } else if (e.getSource() == bookButton) {
-            bookAccommodation();
         } else if (e.getSource() == cancelButton) {
             cancelBooking();
         } else if (e.getSource() == logoutButton) {
             logout();
         }
     }
-    
-    // Method to refresh bookings data (called after successful booking)
+
     public void refreshBookings() {
         loadUserBookings();
-        tabbedPane.setSelectedIndex(1); // Switch to My Bookings tab
+        tabbedPane.setSelectedIndex(1);
+    }
+
+    private void cancelBooking() {
+        int selectedRow = bookingsTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a booking to cancel.", "Selection Required", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        int bookingId = (int) bookingsTable.getValueAt(selectedRow, 0);
+        String status = (String) bookingsTable.getValueAt(selectedRow, 6);
+
+        if ("CANCELLED".equals(status) || "COMPLETED".equals(status)) {
+            JOptionPane.showMessageDialog(this, "You cannot cancel a booking that is already " + status.toLowerCase() + ".", "Cancellation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to cancel this booking?", "Confirm Cancellation", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean cancelled = bookingController.cancelBooking(bookingId);
+            if (cancelled) {
+                JOptionPane.showMessageDialog(this, "Booking cancelled successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                loadUserBookings();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to cancel booking. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private class AccommodationCard extends JPanel {
+        public AccommodationCard(Accommodation accommodation) {
+            setLayout(new BorderLayout());
+            setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+                    BorderFactory.createEmptyBorder(10, 10, 10, 10)
+            ));
+            setBackground(Color.WHITE);
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
+
+            JLabel imageLabel = new JLabel(new ImageIcon("resources/hotel_sample.png"));
+            imageLabel.setPreferredSize(new Dimension(120, 100));
+            add(imageLabel, BorderLayout.WEST);
+
+            JPanel infoPanel = new JPanel();
+            infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+            infoPanel.setBackground(Color.WHITE);
+
+            JLabel nameLabel = new JLabel(accommodation.getName());
+            nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            JLabel cityLabel = new JLabel(accommodation.getCity() + ", " + accommodation.getCountry());
+            cityLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+            JLabel priceLabel = new JLabel("Price: $" + String.format("%.2f", accommodation.getPricePerNight()) + " / night");
+            priceLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+            priceLabel.setForeground(new Color(0, 128, 0));
+            JLabel ratingLabel = new JLabel("Rating: " + accommodation.getRating());
+            ratingLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+
+            infoPanel.add(nameLabel);
+            infoPanel.add(cityLabel);
+            infoPanel.add(priceLabel);
+            infoPanel.add(ratingLabel);
+            add(infoPanel, BorderLayout.CENTER);
+
+            JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            actionPanel.setBackground(Color.WHITE);
+            JButton viewButton = new JButton("View");
+            JButton bookButton = new JButton("Book");
+
+            viewButton.addActionListener(e -> {
+                AccommodationDetailsView detailsView = new AccommodationDetailsView(accommodation, currentUser);
+                detailsView.setVisible(true);
+            });
+
+            bookButton.addActionListener(e -> {
+                BookingFormView bookingForm = new BookingFormView(accommodation, currentUser, UserDashboardView.this);
+                bookingForm.setVisible(true);
+            });
+
+            actionPanel.add(viewButton);
+            actionPanel.add(bookButton);
+            add(actionPanel, BorderLayout.EAST);
+        }
     }
 }
