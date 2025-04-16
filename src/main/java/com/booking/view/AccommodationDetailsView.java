@@ -5,6 +5,11 @@ import com.booking.controller.ReviewController;
 import com.booking.model.Accommodation;
 import com.booking.model.Review;
 import com.booking.model.User;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import com.booking.utils.DatabaseConnection;  // Adapte le chemin si nécessaire
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -43,7 +48,7 @@ public class AccommodationDetailsView extends JFrame implements ActionListener {
         initComponents();
         loadReviews();
         loadAmenities();
-        loadImages();
+        loadImages(accommodation.getId());
     }
     
     private void initComponents() {
@@ -69,21 +74,49 @@ public class AccommodationDetailsView extends JFrame implements ActionListener {
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBackground(Color.WHITE);
-        
-        // Images panel
-        imagesPanel = new JPanel(new BorderLayout());
-        imagesPanel.setBackground(Color.WHITE);
+
+// Images panel
+// Images panel
+        imagesPanel = new JPanel(new BorderLayout()) {
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(600, 400); // Taille fixe pour le conteneur
+            }
+        };
+        imagesPanel.setBackground(new Color(230, 230, 250));
         imagesPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
-        imagesPanel.setPreferredSize(new Dimension(600, 400));
-        
-        // Placeholder for actual images
-        JPanel imagePlaceholder = new JPanel();
-        imagePlaceholder.setBackground(new Color(230, 230, 250));
-        imagePlaceholder.setPreferredSize(new Dimension(600, 400));
-        JLabel imageLabel = new JLabel("Images will be displayed here");
-        imagePlaceholder.add(imageLabel);
-        imagesPanel.add(imagePlaceholder, BorderLayout.CENTER);
-        
+
+// Charger les images
+        loadImages(accommodation.getId());
+
+        leftPanel.add(imagesPanel);
+// Charger les images (cela remplira le imagesPanel)
+        loadImages(accommodation.getId());
+
+        leftPanel.add(imagesPanel);
+// Récupérer l'image principale de la BDD
+        String imageUrl = getPrimaryImageUrl(1); // 1 = accommodation_id
+
+        JPanel imageContainer = new JPanel();
+        imageContainer.setBackground(new Color(230, 230, 250));
+        imageContainer.setPreferredSize(new Dimension(600, 400));
+
+        if (imageUrl != null) {
+            try {
+                // L'image doit être placée dans src/main/resources/images/
+                ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("images/" + imageUrl));
+                Image image = icon.getImage().getScaledInstance(600, 400, Image.SCALE_SMOOTH);
+                JLabel imageLabel = new JLabel(new ImageIcon(image));
+                imageContainer.add(imageLabel);
+            } catch (Exception e) {
+                imageContainer.add(new JLabel("Image not found: " + imageUrl));
+            }
+        } else {
+            imageContainer.add(new JLabel("No image available for this accommodation"));
+        }
+
+        imagesPanel.add(imageContainer, BorderLayout.CENTER);
+
         // Description panel
         JPanel descriptionPanel = createDescriptionPanel();
         
@@ -166,7 +199,7 @@ public class AccommodationDetailsView extends JFrame implements ActionListener {
         nameLabel.setFont(new Font("Arial", Font.BOLD, 20));
         nameLabel.setForeground(Color.WHITE);
         nameLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        
+
         headerPanel.add(backButton, BorderLayout.WEST);
         headerPanel.add(nameLabel, BorderLayout.CENTER);
         
@@ -560,34 +593,88 @@ public class AccommodationDetailsView extends JFrame implements ActionListener {
         
         container.add(amenityPanel);
     }
-    
-    private void loadImages() {
-        // In a real application, this would load actual images
-        // Here we'll just create a placeholder panel with tabs
-        
-        JTabbedPane imageTabs = new JTabbedPane();
-        imageTabs.setFont(new Font("Arial", Font.PLAIN, 14));
-        
-        String[] imageTypes = {"All photos", "Room", "Exterior", "Bathroom", "Dining"};
-        
-        for (String type : imageTypes) {
-            JPanel imagePanel = new JPanel();
-            imagePanel.setBackground(new Color(240, 240, 240));
-            
-            JLabel placeholder = new JLabel("Images of " + type.toLowerCase() + " would be displayed here");
-            placeholder.setFont(new Font("Arial", Font.PLAIN, 14));
-            imagePanel.add(placeholder);
-            
-            imageTabs.addTab(type, imagePanel);
+    private String getPrimaryImageUrl(int accommodationId) {
+        String imageUrl = null;
+        String query = "SELECT image_url FROM accommodation_images WHERE accommodation_id = ? AND is_primary = TRUE LIMIT 1";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, accommodationId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                imageUrl = rs.getString("image_url");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        
-        imagesPanel.removeAll();
-        imagesPanel.add(imageTabs, BorderLayout.CENTER);
-        
-        revalidate();
-        repaint();
+
+        return imageUrl;
     }
-    
+
+    private void loadImages(int accommodationId) {
+        imagesPanel.removeAll();
+        imagesPanel.setLayout(new BorderLayout());
+
+        // Récupérer l'URL de l'image principale
+        String imageUrl = getPrimaryImageUrl(accommodationId);
+
+        if (imageUrl != null) {
+            try {
+                // Charger l'image depuis les ressources
+                ImageIcon originalIcon = new ImageIcon(getClass().getClassLoader().getResource("images/" + imageUrl));
+                Image originalImage = originalIcon.getImage();
+
+                // Créer un JLabel pour afficher l'image avec redimensionnement intelligent
+                JLabel imageLabel = new JLabel() {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        super.paintComponent(g);
+
+                        // Redimensionnement proportionnel pour s'adapter au panel
+                        int panelWidth = getWidth();
+                        int panelHeight = getHeight();
+
+                        // Calcul des dimensions en conservant le ratio
+                        double imageRatio = (double) originalIcon.getIconWidth() / originalIcon.getIconHeight();
+                        double panelRatio = (double) panelWidth / panelHeight;
+
+                        int drawWidth, drawHeight;
+
+                        if (panelRatio > imageRatio) {
+                            // Le panel est plus large que l'image (basé sur le ratio)
+                            drawHeight = panelHeight;
+                            drawWidth = (int) (drawHeight * imageRatio);
+                        } else {
+                            // Le panel est plus étroit que l'image
+                            drawWidth = panelWidth;
+                            drawHeight = (int) (drawWidth / imageRatio);
+                        }
+
+                        // Centrer l'image
+                        int x = (panelWidth - drawWidth) / 2;
+                        int y = (panelHeight - drawHeight) / 2;
+
+                        // Dessiner l'image redimensionnée
+                        g.drawImage(originalImage, x, y, drawWidth, drawHeight, this);
+                    }
+                };
+
+                imageLabel.setPreferredSize(new Dimension(600, 400));
+                imagesPanel.add(imageLabel, BorderLayout.CENTER);
+
+            } catch (Exception e) {
+                JLabel errorLabel = new JLabel("Image non trouvée: " + imageUrl);
+                imagesPanel.add(errorLabel, BorderLayout.CENTER);
+            }
+        } else {
+            JLabel noImageLabel = new JLabel("Aucune image disponible");
+            imagesPanel.add(noImageLabel, BorderLayout.CENTER);
+        }
+
+        imagesPanel.revalidate();
+        imagesPanel.repaint();
+    }
     private String getRatingDescription(double rating) {
         if (rating >= 4.5) return "Excellent";
         if (rating >= 4.0) return "Very Good";
