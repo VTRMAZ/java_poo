@@ -31,7 +31,8 @@ public class AdminDashboardView extends JFrame implements ActionListener {
     private final BookingController bookingController;
     private final PromotionController promotionController;
     private final PaymentController paymentController;
-    
+    private JTable accommodationTable;
+
     private JTabbedPane tabbedPane;
     
     // Tables and their models
@@ -43,7 +44,7 @@ public class AdminDashboardView extends JFrame implements ActionListener {
     private DefaultTableModel accommodationTableModel;
     private DefaultTableModel bookingTableModel;
     private DefaultTableModel promotionTableModel;
-    
+
     // Buttons
     private JButton logoutButton;
     private JButton addUserButton;
@@ -57,7 +58,8 @@ public class AdminDashboardView extends JFrame implements ActionListener {
     private JButton editPromotionButton;
     private JButton deletePromotionButton;
     private JButton refreshStatsButton;
-    
+
+
     public AdminDashboardView(User user) {
         this.currentUser = user;
         this.userController = new UserController();
@@ -67,6 +69,7 @@ public class AdminDashboardView extends JFrame implements ActionListener {
         this.paymentController = new PaymentController();
         
         setTitle("Booking Application - Admin Dashboard");
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000, 700);
         setLocationRelativeTo(null);
@@ -158,7 +161,7 @@ public class AdminDashboardView extends JFrame implements ActionListener {
         addUserButton.addActionListener(this);
         editUserButton.addActionListener(this);
         deleteUserButton.addActionListener(this);
-        
+
         buttonsPanel.add(addUserButton);
         buttonsPanel.add(editUserButton);
         buttonsPanel.add(deleteUserButton);
@@ -201,9 +204,33 @@ public class AdminDashboardView extends JFrame implements ActionListener {
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
         addAccommodationButton = new JButton("Add Accommodation");
-        editAccommodationButton = new JButton("Edit Accommodation");
+        editAccommodationButton = new JButton("Rafraîchir les hébergements");
         deleteAccommodationButton = new JButton("Delete Accommodation");
-        
+        // ensuite tu ajoutes ton bouton
+        accommodationTable = new JTable();
+        loadAccommodations();  // Pour charger les données à l'ouverture
+
+        JButton addAccommodationButton = new JButton("Ajouter un hébergement");
+        addAccommodationButton.addActionListener(e -> openAddAccommodationDialog());
+
+        editAccommodationButton.addActionListener(e -> loadAccommodations());
+
+        JPanel accommodationPanel = new JPanel(new BorderLayout());
+
+// Panel du haut avec les boutons
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topPanel.add(addAccommodationButton);
+
+// Ajout dans le panel principal
+        accommodationPanel.add(topPanel, BorderLayout.NORTH);
+        accommodationPanel.add(new JScrollPane(accommodationTable), BorderLayout.CENTER);
+        loadAccommodations();
+// Ajout à l'onglet "Hébergements"
+        tabbedPane.addTab("Hébergements", accommodationPanel);
+
+        tabbedPane.add("Hébergements", accommodationPanel);
+
+
         addAccommodationButton.addActionListener(this);
         editAccommodationButton.addActionListener(this);
         deleteAccommodationButton.addActionListener(this);
@@ -299,9 +326,9 @@ public class AdminDashboardView extends JFrame implements ActionListener {
         buttonsPanel.add(addPromotionButton);
         buttonsPanel.add(editPromotionButton);
         buttonsPanel.add(deletePromotionButton);
-        
+
         promotionsPanel.add(buttonsPanel, BorderLayout.SOUTH);
-        
+
         return promotionsPanel;
     }
     
@@ -686,7 +713,62 @@ public class AdminDashboardView extends JFrame implements ActionListener {
             loginView.setVisible(true);
         });
     }
-    
+
+
+    private void openAddAccommodationDialog() {
+        JTextField nameField = new JTextField();
+        JTextField addressField = new JTextField();
+        JTextField cityField = new JTextField();
+        JTextField countryField = new JTextField();
+        JTextField descriptionField = new JTextField();
+        JTextField priceField = new JTextField();
+        JTextField guestsField = new JTextField();
+        JTextField typeField = new JTextField();
+        JCheckBox wifiCheck = new JCheckBox("WiFi");
+        JCheckBox poolCheck = new JCheckBox("Piscine");
+        JCheckBox parkingCheck = new JCheckBox("Parking");
+        JTextField ratingField = new JTextField();
+
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        panel.add(new JLabel("Nom :")); panel.add(nameField);
+        panel.add(new JLabel("Adresse :")); panel.add(addressField);
+        panel.add(new JLabel("Ville :")); panel.add(cityField);
+        panel.add(new JLabel("Pays :")); panel.add(countryField);
+        panel.add(new JLabel("Description :")); panel.add(descriptionField);
+        panel.add(new JLabel("Prix par nuit :")); panel.add(priceField);
+        panel.add(new JLabel("Nombre max de personnes :")); panel.add(guestsField);
+        panel.add(new JLabel("Type :")); panel.add(typeField);
+        panel.add(wifiCheck); panel.add(poolCheck); panel.add(parkingCheck);
+        panel.add(new JLabel("Note (1 à 5) :")); panel.add(ratingField);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Ajouter un hébergement",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            Accommodation acc = new Accommodation();
+            acc.setName(nameField.getText());
+            acc.setAddress(addressField.getText());
+            acc.setCity(cityField.getText());
+            acc.setCountry(countryField.getText());
+            acc.setDescription(descriptionField.getText());
+            acc.setPricePerNight(Double.parseDouble(priceField.getText()));
+            acc.setMaxGuests(Integer.parseInt(guestsField.getText()));
+            acc.setAccommodationType(typeField.getText());
+            acc.setHasWifi(wifiCheck.isSelected());
+            acc.setHasPool(poolCheck.isSelected());
+            acc.setHasParkingSpace(parkingCheck.isSelected());
+            acc.setRating(Integer.parseInt(ratingField.getText()));
+
+            boolean success = accommodationController.addAccommodation(acc);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Hébergement ajouté !");
+            } else {
+                JOptionPane.showMessageDialog(this, "Échec de l'ajout.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == logoutButton) {
@@ -714,12 +796,6 @@ public class AdminDashboardView extends JFrame implements ActionListener {
             // Handle add accommodation
             JOptionPane.showMessageDialog(this, 
                                           "Add Accommodation functionality would be implemented here.", 
-                                          "Admin Function", 
-                                          JOptionPane.INFORMATION_MESSAGE);
-        } else if (e.getSource() == editAccommodationButton) {
-            // Handle edit accommodation
-            JOptionPane.showMessageDialog(this, 
-                                          "Edit Accommodation functionality would be implemented here.", 
                                           "Admin Function", 
                                           JOptionPane.INFORMATION_MESSAGE);
         } else if (e.getSource() == deleteAccommodationButton) {
