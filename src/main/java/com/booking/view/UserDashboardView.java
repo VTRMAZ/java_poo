@@ -14,11 +14,12 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 public class UserDashboardView extends JFrame implements ActionListener {
-    
+    private JComboBox<String> ratingComboBox;
+
     private final User currentUser;
     private final AccommodationController accommodationController;
     private final BookingController bookingController;
-    
+
     private JTabbedPane tabbedPane;
     private JTable accommodationsTable;
     private JTable bookingsTable;
@@ -33,76 +34,76 @@ public class UserDashboardView extends JFrame implements ActionListener {
     private JComboBox<String> accommodationTypeComboBox;
     private JSlider priceRangeSlider;
     private JLabel priceRangeLabel;
-    
+
     public UserDashboardView(User user) {
         this.currentUser = user;
         this.accommodationController = new AccommodationController();
         this.bookingController = new BookingController();
-        
+
         setTitle("Booking Application - User Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
         setLocationRelativeTo(null);
-        
+
         initComponents();
         loadAccommodations();
         loadUserBookings();
     }
-    
+
     private void initComponents() {
         // Set layout
         setLayout(new BorderLayout());
-        
+
         // Create header panel
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         JLabel welcomeLabel = new JLabel("Welcome, " + currentUser.getFirstName() + " " + currentUser.getLastName());
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        
+
         logoutButton = new JButton("Logout");
         logoutButton.addActionListener(this);
-        
+
         headerPanel.add(welcomeLabel, BorderLayout.WEST);
         headerPanel.add(logoutButton, BorderLayout.EAST);
-        
+
         add(headerPanel, BorderLayout.NORTH);
-        
+
         // Create tabbed pane
         tabbedPane = new JTabbedPane();
-        
+
         // Create search accommodations panel
         JPanel searchPanel = createSearchPanel();
         tabbedPane.addTab("Search Accommodations", searchPanel);
-        
+
         // Create my bookings panel
         JPanel bookingsPanel = createBookingsPanel();
         tabbedPane.addTab("My Bookings", bookingsPanel);
-        
+
         add(tabbedPane, BorderLayout.CENTER);
     }
-    
+
     private JPanel createSearchPanel() {
         JPanel searchPanel = new JPanel(new BorderLayout());
         searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         // Create search filters panel
         JPanel filtersPanel = new JPanel(new GridLayout(1, 4, 10, 0));
         filtersPanel.setBorder(BorderFactory.createTitledBorder("Search Filters"));
-        
+
         // City filter
         JPanel cityPanel = new JPanel(new BorderLayout());
         cityPanel.add(new JLabel("City:"), BorderLayout.NORTH);
         cityField = new JTextField();
         cityPanel.add(cityField, BorderLayout.CENTER);
-        
+
         // Accommodation type filter
         JPanel typePanel = new JPanel(new BorderLayout());
         typePanel.add(new JLabel("Type:"), BorderLayout.NORTH);
         String[] accommodationTypes = {"All", "hotel", "apartment", "villa", "chalet", "cottage"};
         accommodationTypeComboBox = new JComboBox<>(accommodationTypes);
         typePanel.add(accommodationTypeComboBox, BorderLayout.CENTER);
-        
+
         // Price range filter
         JPanel pricePanel = new JPanel(new BorderLayout());
         pricePanel.add(new JLabel("Max Price per Night:"), BorderLayout.NORTH);
@@ -118,18 +119,28 @@ public class UserDashboardView extends JFrame implements ActionListener {
         });
         pricePanel.add(priceRangeSlider, BorderLayout.CENTER);
         pricePanel.add(priceRangeLabel, BorderLayout.EAST);
-        
+
+// Rating filter
+
+        JPanel ratingPanel = new JPanel(new BorderLayout());
+        ratingPanel.add(new JLabel("Min Rating:"), BorderLayout.NORTH);
+        String[] ratingOptions = {"All", "5", "4", "3", "2", "1"};
+        ratingComboBox = new JComboBox<>(ratingOptions); // 👈 Déclare ratingComboBox comme variable d'instance si besoin
+        ratingPanel.add(ratingComboBox, BorderLayout.CENTER);
+
         // Search button
         searchButton = new JButton("Search");
         searchButton.addActionListener(this);
-        
+
         filtersPanel.add(cityPanel);
         filtersPanel.add(typePanel);
         filtersPanel.add(pricePanel);
+        filtersPanel.add(ratingPanel); // 👈 ici, on ajoute le rating
+
         filtersPanel.add(searchButton);
-        
+
         searchPanel.add(filtersPanel, BorderLayout.NORTH);
-        
+
         // Create accommodations table
         accommodationTableModel = new DefaultTableModel() {
             @Override
@@ -137,7 +148,7 @@ public class UserDashboardView extends JFrame implements ActionListener {
                 return false; // Make all cells non-editable
             }
         };
-        
+
         accommodationTableModel.addColumn("ID");
         accommodationTableModel.addColumn("Name");
         accommodationTableModel.addColumn("City");
@@ -145,36 +156,36 @@ public class UserDashboardView extends JFrame implements ActionListener {
         accommodationTableModel.addColumn("Type");
         accommodationTableModel.addColumn("Price/Night");
         accommodationTableModel.addColumn("Rating");
-        
+
         accommodationsTable = new JTable(accommodationTableModel);
         accommodationsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         accommodationsTable.getColumnModel().getColumn(0).setMaxWidth(50); // ID column
         accommodationsTable.getColumnModel().getColumn(6).setMaxWidth(70); // Rating column
-        
+
         JScrollPane scrollPane = new JScrollPane(accommodationsTable);
         searchPanel.add(scrollPane, BorderLayout.CENTER);
-        
+
         // Create buttons panel
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
+
         viewDetailsButton = new JButton("View Details");
         bookButton = new JButton("Book Now");
-        
+
         viewDetailsButton.addActionListener(this);
         bookButton.addActionListener(this);
-        
+
         buttonsPanel.add(viewDetailsButton);
         buttonsPanel.add(bookButton);
-        
+
         searchPanel.add(buttonsPanel, BorderLayout.SOUTH);
-        
+
         return searchPanel;
     }
-    
+
     private JPanel createBookingsPanel() {
         JPanel bookingsPanel = new JPanel(new BorderLayout());
         bookingsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         // Create bookings table
         bookingTableModel = new DefaultTableModel() {
             @Override
@@ -182,7 +193,7 @@ public class UserDashboardView extends JFrame implements ActionListener {
                 return false; // Make all cells non-editable
             }
         };
-        
+
         bookingTableModel.addColumn("ID");
         bookingTableModel.addColumn("Accommodation");
         bookingTableModel.addColumn("Check-in");
@@ -190,33 +201,33 @@ public class UserDashboardView extends JFrame implements ActionListener {
         bookingTableModel.addColumn("Guests");
         bookingTableModel.addColumn("Total Price");
         bookingTableModel.addColumn("Status");
-        
+
         bookingsTable = new JTable(bookingTableModel);
         bookingsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
+
         JScrollPane scrollPane = new JScrollPane(bookingsTable);
         bookingsPanel.add(scrollPane, BorderLayout.CENTER);
-        
+
         // Create buttons panel
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
+
         cancelButton = new JButton("Cancel Booking");
         cancelButton.addActionListener(this);
-        
+
         buttonsPanel.add(cancelButton);
-        
+
         bookingsPanel.add(buttonsPanel, BorderLayout.SOUTH);
-        
+
         return bookingsPanel;
     }
-    
+
     private void loadAccommodations() {
         // Clear table
         accommodationTableModel.setRowCount(0);
-        
+
         // Get all accommodations
         List<Accommodation> accommodations = accommodationController.getAllAccommodations();
-        
+
         // Add rows to table
         for (Accommodation accommodation : accommodations) {
             accommodationTableModel.addRow(new Object[]{
@@ -230,18 +241,18 @@ public class UserDashboardView extends JFrame implements ActionListener {
             });
         }
     }
-    
+
     private void loadUserBookings() {
         // Clear table
         bookingTableModel.setRowCount(0);
-        
+
         // Get user's bookings
         List<Booking> bookings = bookingController.getBookingsByUserId(currentUser.getId());
-        
+
         // Add rows to table
         for (Booking booking : bookings) {
             Accommodation accommodation = accommodationController.getAccommodationById(booking.getAccommodationId());
-            
+
             bookingTableModel.addRow(new Object[]{
                 booking.getId(),
                 accommodation != null ? accommodation.getName() : "Unknown",
@@ -253,55 +264,47 @@ public class UserDashboardView extends JFrame implements ActionListener {
             });
         }
     }
-    
+
     private void searchAccommodations() {
-        // Get filter values
         String city = cityField.getText().trim();
         String type = accommodationTypeComboBox.getSelectedItem().toString();
         double maxPrice = priceRangeSlider.getValue();
-        
+
+        // 🔥 Nouveau : rating exact
+        int exactRating = 0;
+        String selectedRating = ratingComboBox.getSelectedItem().toString();
+        if (!selectedRating.equals("All")) {
+            exactRating = Integer.parseInt(selectedRating); // "4" → 4
+        }
+
         // Clear table
         accommodationTableModel.setRowCount(0);
-        
+
         // Get filtered accommodations
-        List<Accommodation> accommodations;
-        
-        if ("All".equals(type)) {
-            accommodations = accommodationController.searchWithFilters(
+        List<Accommodation> accommodations = accommodationController.searchWithFilters(
                 city.isEmpty() ? null : city,
-                null, // country
-                null, // type (all)
-                0, // minPrice
-                maxPrice, // maxPrice
-                0, // minRating
-                0  // maxGuests
-            );
-        } else {
-            accommodations = accommodationController.searchWithFilters(
-                city.isEmpty() ? null : city,
-                null, // country
-                type, // specific type
-                0, // minPrice
-                maxPrice, // maxPrice
-                0, // minRating
-                0  // maxGuests
-            );
-        }
-        
+                null, // Country is not filtered here
+                "All".equals(type) ? null : type, // Specific type or "All"
+                0, // Min price (no filter)
+                maxPrice, // Max price
+                exactRating, // Rating filter (exact match)
+                0 // Max guests (no filter)
+        );
+
         // Add rows to table
         for (Accommodation accommodation : accommodations) {
-            accommodationTableModel.addRow(new Object[]{
-                accommodation.getId(),
-                accommodation.getName(),
-                accommodation.getCity(),
-                accommodation.getCountry(),
-                accommodation.getAccommodationType(),
-                String.format("$%.2f", accommodation.getPricePerNight()),
-                accommodation.getRating()
+            accommodationTableModel.addRow(new Object[] {
+                    accommodation.getId(),
+                    accommodation.getName(),
+                    accommodation.getCity(),
+                    accommodation.getCountry(),
+                    accommodation.getAccommodationType(),
+                    String.format("$%.2f", accommodation.getPricePerNight()),
+                    accommodation.getRating()
             });
         }
     }
-    
+
     private void viewAccommodationDetails() {
         int selectedRow = accommodationsTable.getSelectedRow();
         
