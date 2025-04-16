@@ -21,6 +21,7 @@ public class RegisterView extends JFrame implements ActionListener {
     private JTextField phoneField;
     private JButton registerButton;
     private JButton backButton;
+    private int newusers;
     
     public RegisterView() {
         userController = new UserController();
@@ -63,6 +64,7 @@ public class RegisterView extends JFrame implements ActionListener {
         lastNameField = new JTextField();
         JLabel phoneLabel = new JLabel("Phone Number:");
         phoneField = new JTextField();
+        newusers=1;
         
         inputPanel.add(usernameLabel);
         inputPanel.add(usernameField);
@@ -174,7 +176,7 @@ public class RegisterView extends JFrame implements ActionListener {
         }
         
         // Register the user
-        boolean registered = userController.registerUser(username, password, email, firstName, lastName, phone);
+        boolean registered = userController.registerUser(username, password, email, firstName, lastName, phone,1);
         
         if (registered) {
             // Registration successful

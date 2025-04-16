@@ -41,7 +41,7 @@ public class UserController {
         return userDAO.authenticate(username, password);
     }
     
-    public boolean registerUser(String username, String password, String email, String firstName, String lastName, String phoneNumber) {
+    public boolean registerUser(String username, String password, String email, String firstName, String lastName, String phoneNumber,int newuser) {
         User user = new User();
         user.setUsername(username);
         user.setPassword(password);
@@ -50,7 +50,9 @@ public class UserController {
         user.setLastName(lastName);
         user.setPhoneNumber(phoneNumber);
         user.setAdmin(false);
-        
+        user.setNewUsers(newuser);  // Ajout de cette ligne pour définir un utilisateur comme "nouveau"
+
+
         return userDAO.add(user);
     }
 }

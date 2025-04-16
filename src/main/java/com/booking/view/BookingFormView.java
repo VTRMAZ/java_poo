@@ -21,6 +21,14 @@ import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.Date;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import com.booking.utils.DatabaseConnection;  // Adapte le chemin si nécessaire
+
+
+
 public class BookingFormView extends JFrame implements ActionListener {
     
     private final Accommodation accommodation;
@@ -99,49 +107,78 @@ public class BookingFormView extends JFrame implements ActionListener {
         // Add to frame
         setContentPane(scrollPane);
     }
-    
+
     private JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout(20, 0));
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setMaximumSize(new Dimension(Short.MAX_VALUE, 100));
-        
+
         // Accommodation info
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
-        
+
         JLabel nameLabel = new JLabel(accommodation.getName());
         nameLabel.setFont(new Font("Arial", Font.BOLD, 24));
         nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         JLabel addressLabel = new JLabel(accommodation.getAddress() + ", " + accommodation.getCity() + ", " + accommodation.getCountry());
         addressLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         addressLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         JLabel typeLabel = new JLabel(capitalizeFirstLetter(accommodation.getAccommodationType()) + " • Max " + accommodation.getMaxGuests() + " guests");
         typeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         typeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         infoPanel.add(nameLabel);
         infoPanel.add(Box.createVerticalStrut(5));
         infoPanel.add(addressLabel);
         infoPanel.add(Box.createVerticalStrut(5));
         infoPanel.add(typeLabel);
-        
-        // Image placeholder (would be an actual image in a real app)
-        JPanel imagePlaceholder = new JPanel();
-        imagePlaceholder.setBackground(new Color(230, 230, 250));
-        imagePlaceholder.setPreferredSize(new Dimension(150, 100));
-        JLabel imageLabel = new JLabel("Image");
-        imageLabel.setForeground(Color.GRAY);
-        imagePlaceholder.add(imageLabel);
-        
+
+        // Image panel - version améliorée
+// Image panel - version optimisée
+        JPanel imagePanel = new JPanel(new BorderLayout()) {
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(150, 100);
+            }
+        };
+        imagePanel.setBackground(new Color(230, 230, 250));
+
+// Récupérer l'image principale de l'hébergement
+        String imageUrl = getPrimaryImageUrl(accommodation.getId());
+
+        if (imageUrl != null) {
+            try {
+                // Charger l'image depuis les ressources
+                ImageIcon originalIcon = new ImageIcon(getClass().getClassLoader().getResource("images/" + imageUrl));
+
+                // Redimensionner l'image pour s'adapter au panel
+                Image scaledImage = originalIcon.getImage().getScaledInstance(
+                        150, 100, Image.SCALE_SMOOTH);
+
+                JLabel imageLabel = new JLabel(new ImageIcon(scaledImage));
+                imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                imagePanel.add(imageLabel, BorderLayout.CENTER);
+
+            } catch (Exception e) {
+                JLabel errorLabel = new JLabel("Image not found");
+                errorLabel.setForeground(Color.GRAY);
+                imagePanel.add(errorLabel, BorderLayout.CENTER);
+            }
+        } else {
+            JLabel noImageLabel = new JLabel("No image");
+            noImageLabel.setForeground(Color.GRAY);
+            imagePanel.add(noImageLabel, BorderLayout.CENTER);
+        }
+
         headerPanel.add(infoPanel, BorderLayout.CENTER);
-        headerPanel.add(imagePlaceholder, BorderLayout.EAST);
-        
+        headerPanel.add(imagePanel, BorderLayout.EAST);
         return headerPanel;
     }
-    
+
+
     private JPanel createBookingDetailsPanel() {
         JPanel detailsPanel = new JPanel();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.X_AXIS));
@@ -209,9 +246,27 @@ public class BookingFormView extends JFrame implements ActionListener {
         
         guestsPanel.add(guestsLabel, BorderLayout.WEST);
         guestsPanel.add(guestsSpinner, BorderLayout.EAST);
-        
+
+
+
+
         // Promo code panel
         JPanel promoPanel = new JPanel(new BorderLayout(10, 0));
+
+        // Supposons que currentUser est ton objet utilisateur actuel
+        int userId = currentUser.getId();
+        boolean isEligibleForPromo = checkNewUserStatus(userId);  // Méthode qui vérifie si new_users = 0
+
+// Afficher ou non le panneau du code promo en fonction de l'éligibilité
+        if (isEligibleForPromo) {
+            // Si new_users == 0, on affiche le panneau
+            promoPanel.setVisible(true);
+        } else {
+            // Sinon, on cache le panneau
+            promoPanel.setVisible(false);
+        }
+
+
         promoPanel.setBackground(Color.WHITE);
         promoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
@@ -230,6 +285,7 @@ public class BookingFormView extends JFrame implements ActionListener {
         
         promoPanel.add(promoLabel, BorderLayout.WEST);
         promoPanel.add(promoInputPanel, BorderLayout.CENTER);
+
         
         // Add components to form panel
         formPanel.add(formTitle);
@@ -240,7 +296,14 @@ public class BookingFormView extends JFrame implements ActionListener {
         formPanel.add(Box.createVerticalStrut(15));
         formPanel.add(promoPanel);
         formPanel.add(Box.createVerticalStrut(15));
-        
+        // Vérification de l'utilisateur
+        if (isEligibleForPromo) {
+            // Afficher le panneau si new_users == 0
+            promoPanel.setVisible(true);
+        } else {
+            // Cacher le panneau si new_users != 0
+            promoPanel.setVisible(false);
+        }
         // Availability check
         JPanel availabilityPanel = new JPanel(new BorderLayout(10, 0));
         availabilityPanel.setBackground(Color.WHITE);
@@ -756,7 +819,49 @@ public class BookingFormView extends JFrame implements ActionListener {
         }
         return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
     }
-    
+    private String getPrimaryImageUrl(int accommodationId) {
+        String imageUrl = null;
+        String query = "SELECT image_url FROM accommodation_images WHERE accommodation_id = ? AND is_primary = TRUE LIMIT 1";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, accommodationId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                imageUrl = rs.getString("image_url");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return imageUrl;
+    }
+
+
+    private boolean checkNewUserStatus(int userId) {
+        boolean isEligible = false;
+        String query = "SELECT new_users FROM users WHERE id = ?";
+
+        // Connexion à la base de données
+        try (Connection conn = DatabaseConnection.getConnection();  // Connexion via une méthode déjà existante
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                // Si new_users est égal à 0, l'utilisateur est éligible
+                isEligible = rs.getInt("new_users") == 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isEligible;
+    }
+
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == checkAvailabilityButton) {
