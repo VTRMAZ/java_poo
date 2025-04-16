@@ -67,7 +67,7 @@ public class BookingFormView extends JFrame implements ActionListener {
         
         setTitle("Complete your booking - " + accommodation.getName());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(800, 700);
+        setSize(1300, 900);
         setLocationRelativeTo(null);
         setResizable(false);
         
@@ -422,27 +422,36 @@ public class BookingFormView extends JFrame implements ActionListener {
         
         return paymentPanel;
     }
-    
+
     private JPanel createButtonsPanel() {
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonsPanel.setBackground(Color.WHITE);
         buttonsPanel.setMaximumSize(new Dimension(Short.MAX_VALUE, 50));
-        
+
         cancelButton = new JButton("Cancel");
+        cancelButton.setBackground(new Color(128, 0, 0)); // Green background
+        cancelButton.setForeground(Color.WHITE); // White text
+        cancelButton.setFont(new Font("Arial", Font.BOLD, 14));
+        cancelButton.setOpaque(true);
+        cancelButton.setContentAreaFilled(true); // Important to show background color
         cancelButton.addActionListener(this);
-        
+
         bookButton = new JButton("Complete Booking");
-        bookButton.setBackground(new Color(0, 128, 0));
-        bookButton.setForeground(Color.WHITE);
+        bookButton.setBackground(new Color(0, 128, 0)); // Green background
+        bookButton.setForeground(Color.WHITE); // White text
         bookButton.setFont(new Font("Arial", Font.BOLD, 14));
+        bookButton.setOpaque(true);
+        bookButton.setContentAreaFilled(true); // Important to show background color
         bookButton.addActionListener(this);
-        
+
         buttonsPanel.add(cancelButton);
         buttonsPanel.add(bookButton);
-        
+
         return buttonsPanel;
     }
-    
+
+
+
     private void updatePaymentForm() {
         CardLayout cl = (CardLayout) cardPanel.getLayout();
         cl.show(cardPanel, (String) paymentMethodComboBox.getSelectedItem());
