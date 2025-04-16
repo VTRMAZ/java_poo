@@ -46,15 +46,16 @@ public class UserDAOImpl implements UserDAO {
         
         return users;
     }
-    
+
     @Override
     public boolean add(User user) {
-        String query = "INSERT INTO users (username, password, email, first_name, last_name, phone_number, is_admin) " +
-                       "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        
+        // Modifiez la requête SQL pour inclure tous les paramètres
+        String query = "INSERT INTO users (username, password, email, first_name, last_name, phone_number, is_admin, new_users) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            
+
             statement.setString(1, user.getUsername());
             statement.setString(2, user.getPassword());
             statement.setString(3, user.getEmail());
@@ -62,13 +63,14 @@ public class UserDAOImpl implements UserDAO {
             statement.setString(5, user.getLastName());
             statement.setString(6, user.getPhoneNumber());
             statement.setBoolean(7, user.isAdmin());
-            
+            statement.setInt(8, 1);  // Assurez-vous que vous passez la valeur de newUsers
+
             int affectedRows = statement.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        user.setId(generatedKeys.getInt(1));
+                        user.setId(generatedKeys.getInt(1));  // Récupère l'ID généré
                         return true;
                     }
                 }
@@ -76,10 +78,10 @@ public class UserDAOImpl implements UserDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return false;
     }
-    
+
     @Override
     public boolean update(User user) {
         String query = "UPDATE users SET username = ?, password = ?, email = ?, first_name = ?, " +
