@@ -151,13 +151,9 @@ public class BookingFormView extends JFrame implements ActionListener {
 
         if (imageUrl != null) {
             try {
-                // Charger l'image depuis les ressources
                 ImageIcon originalIcon = new ImageIcon(getClass().getClassLoader().getResource("images/" + imageUrl));
 
-                // Redimensionner l'image pour s'adapter au panel
-                Image scaledImage = originalIcon.getImage().getScaledInstance(
-                        150, 100, Image.SCALE_SMOOTH);
-
+                Image scaledImage = originalIcon.getImage().getScaledInstance(150, 100, Image.SCALE_SMOOTH);
                 JLabel imageLabel = new JLabel(new ImageIcon(scaledImage));
                 imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
                 imagePanel.add(imageLabel, BorderLayout.CENTER);
@@ -172,6 +168,7 @@ public class BookingFormView extends JFrame implements ActionListener {
             noImageLabel.setForeground(Color.GRAY);
             imagePanel.add(noImageLabel, BorderLayout.CENTER);
         }
+
 
         headerPanel.add(infoPanel, BorderLayout.CENTER);
         headerPanel.add(imagePanel, BorderLayout.EAST);
@@ -821,7 +818,7 @@ public class BookingFormView extends JFrame implements ActionListener {
     }
     private String getPrimaryImageUrl(int accommodationId) {
         String imageUrl = null;
-        String query = "SELECT image_url FROM accommodation_images WHERE accommodation_id = ? AND is_primary = TRUE LIMIT 1";
+        String query = "SELECT thumbnail_image FROM accommodations WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -829,7 +826,7 @@ public class BookingFormView extends JFrame implements ActionListener {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                imageUrl = rs.getString("image_url");
+                imageUrl = rs.getString("thumbnail_image");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -837,6 +834,7 @@ public class BookingFormView extends JFrame implements ActionListener {
 
         return imageUrl;
     }
+
 
 
     private boolean checkNewUserStatus(int userId) {
