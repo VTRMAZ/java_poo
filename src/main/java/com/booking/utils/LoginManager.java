@@ -22,3 +22,5 @@ public class LoginManager {
         currentUser = null;
     }
 }
+
+
