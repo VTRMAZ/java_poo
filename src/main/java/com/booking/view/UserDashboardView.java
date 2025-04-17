@@ -5,12 +5,17 @@ import com.booking.controller.BookingController;
 import com.booking.model.Accommodation;
 import com.booking.model.Booking;
 import com.booking.model.User;
+import com.booking.utils.DatabaseConnection;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 public class UserDashboardView extends JFrame implements ActionListener {
@@ -287,9 +292,28 @@ public class UserDashboardView extends JFrame implements ActionListener {
             setBackground(Color.WHITE);
             setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
 
-            JLabel imageLabel = new JLabel(new ImageIcon("resources/hotel_sample.png"));
+            JLabel imageLabel;
+            String imageUrl = getPrimaryImageUrl(accommodation.getId());
+
+            if (imageUrl != null) {
+                try {
+                    ImageIcon originalIcon = new ImageIcon(getClass().getClassLoader().getResource("images/" + imageUrl));
+                    Image scaledImage = originalIcon.getImage().getScaledInstance(120, 100, Image.SCALE_SMOOTH);
+                    imageLabel = new JLabel(new ImageIcon(scaledImage));
+                } catch (Exception e) {
+                    imageLabel = new JLabel("Image not found");
+                    imageLabel.setForeground(Color.GRAY);
+                    imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                }
+            } else {
+                imageLabel = new JLabel("No image");
+                imageLabel.setForeground(Color.GRAY);
+                imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            }
+
             imageLabel.setPreferredSize(new Dimension(120, 100));
             add(imageLabel, BorderLayout.WEST);
+
 
             JPanel infoPanel = new JPanel();
             infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
@@ -330,5 +354,23 @@ public class UserDashboardView extends JFrame implements ActionListener {
             actionPanel.add(bookButton);
             add(actionPanel, BorderLayout.EAST);
         }
+    }
+    private String getPrimaryImageUrl(int accommodationId) {
+        String imageUrl = null;
+        String query = "SELECT thumbnail_image FROM accommodations WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, accommodationId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                imageUrl = rs.getString("thumbnail_image");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return imageUrl;
     }
 }

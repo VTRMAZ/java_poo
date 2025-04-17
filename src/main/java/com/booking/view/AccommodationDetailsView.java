@@ -595,7 +595,7 @@ public class AccommodationDetailsView extends JFrame implements ActionListener {
     }
     private String getPrimaryImageUrl(int accommodationId) {
         String imageUrl = null;
-        String query = "SELECT image_url FROM accommodation_images WHERE accommodation_id = ? AND is_primary = TRUE LIMIT 1";
+        String query = "SELECT thumbnail_image FROM accommodations WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -603,7 +603,7 @@ public class AccommodationDetailsView extends JFrame implements ActionListener {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                imageUrl = rs.getString("image_url");
+                imageUrl = rs.getString("thumbnail_image");
             }
         } catch (SQLException e) {
             e.printStackTrace();
